@@ -12,16 +12,32 @@ from . import telethon_helper
 @require_http_methods(["GET", "POST"])
 def telegram_accounts_list(request):
     """
-    GET: List all telegram accounts based on role.
+    GET: List all telegram accounts based on role with pagination.
     POST: Create a basic entry (for manual/bot accounts) or check fields.
     """
     user = request.user
     
     if request.method == "GET":
         if user.is_admin:
-            accounts = TelegramAccount.objects.all()
+            queryset = TelegramAccount.objects.all()
         else:
-            accounts = TelegramAccount.objects.filter(user=user)
+            queryset = TelegramAccount.objects.filter(user=user)
+        
+        # Pagination parameters
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+        except ValueError:
+            page = 1
+            page_size = 10
+        
+        page = max(1, page)
+        page_size = max(1, min(100, page_size))
+        
+        total_count = queryset.count()
+        total_pages = (total_count + page_size - 1) // page_size
+        
+        accounts = queryset[(page - 1) * page_size:page * page_size]
             
         data = [{
             'id': acc.id,
@@ -33,7 +49,16 @@ def telegram_accounts_list(request):
             'has_session': bool(acc.session_string),
             'created_at': acc.created_at.strftime('%Y-%m-%d %H:%M:%S')
         } for acc in accounts]
-        return JsonResponse({'success': True, 'accounts': data})
+        return JsonResponse({
+            'success': True, 
+            'accounts': data,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total': total_count,
+                'total_pages': total_pages
+            }
+        })
         
     elif request.method == "POST":
         if user.is_viewer:

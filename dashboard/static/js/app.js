@@ -105,6 +105,15 @@ function loadTabData(tab) {
 let volumeChart = null;
 let distChart = null;
 
+// Pagination State
+const paginationState = {
+    accounts: { page: 1, pageSize: 10 },
+    messages: { page: 1, pageSize: 20 },
+    schedules: { page: 1, pageSize: 10 },
+    weather: { page: 1, pageSize: 10 },
+    exports: { page: 1, pageSize: 10 }
+};
+
 function initCharts() {
     const ctxVol = document.getElementById('chart-volume').getContext('2d');
     const ctxDist = document.getElementById('chart-distribution').getContext('2d');
@@ -214,7 +223,10 @@ function loadAnalyticsCharts() {
 // ---------------------- ACCOUNTS PANEL ----------------------
 
 function loadTelegramAccounts() {
-    fetch('/api/telegram/accounts/')
+    const page = paginationState.accounts.page;
+    const pageSize = paginationState.accounts.pageSize;
+    
+    fetch(`/api/telegram/accounts/?page=${page}&page_size=${pageSize}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -238,17 +250,18 @@ function loadTelegramAccounts() {
                         
                     const deleteBtn = `<button class="btn-sm btn-danger-neon" onclick="deleteAccount(${acc.id})"><i class="fa-solid fa-trash-can"></i> Delete</button>`;
                     
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${acc.user_email}</strong></td>
-                            <td><code>${acc.phone_number}</code></td>
-                            <td><code>${acc.api_id}</code></td>
-                            <td>${statusText}</td>
-                            <td>${fileText}</td>
-                            <td>${deleteBtn}</td>
-                        </tr>
-                    `;
+tbody.innerHTML += `
+                         <tr>
+                             <td><strong>${acc.user_email}</strong></td>
+                             <td><code>${acc.phone_number}</code></td>
+                             <td><code>${acc.api_id}</code></td>
+                             <td>${statusText}</td>
+                             <td>${fileText}</td>
+                             <td>${deleteBtn}</td>
+                         </tr>
+                     `;
                 });
+                renderPagination('accounts', data.pagination?.total || accounts.length);
             }
         });
 }
@@ -397,8 +410,10 @@ function loadAccountsDropdown(selectId) {
 function loadMessages() {
     const q = document.getElementById('messages-search').value;
     const direction = document.getElementById('messages-direction-filter').value;
+    const page = paginationState.messages.page;
+    const pageSize = paginationState.messages.pageSize;
     
-    fetch(`/api/messages/logs/?q=${encodeURIComponent(q)}&direction=${direction}`)
+    fetch(`/api/messages/logs/?q=${encodeURIComponent(q)}&direction=${direction}&page=${page}&page_size=${pageSize}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -432,6 +447,7 @@ function loadMessages() {
                         </tr>
                     `;
                 });
+                renderPagination('messages', data.pagination?.total || logs.length);
             }
         });
 }
@@ -448,7 +464,10 @@ function toggleScheduleFields() {
 }
 
 function loadSchedules() {
-    fetch('/api/scheduler/messages/')
+    const page = paginationState.schedules.page;
+    const pageSize = paginationState.schedules.pageSize;
+    
+    fetch(`/api/scheduler/messages/?page=${page}&page_size=${pageSize}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -495,6 +514,7 @@ function loadSchedules() {
                         </tr>
                     `;
                 });
+                renderPagination('schedules', data.pagination?.total || schedules.length);
             }
         });
 }
@@ -845,4 +865,54 @@ function triggerExport() {
             showToast(data.error, 'error');
         }
     });
+}
+
+// Pagination Helpers
+function createPagination(containerId, totalItems, totalPages, currentPage, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return '';
+    
+    let html = '<div class="pagination-container" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid rgba(255,255,255,0.05);">';
+    html += `<div style="color: var(--text-muted); font-size: 0.85rem;">Showing ${((currentPage - 1) * paginationState[containerId.replace('-pagination', '')].pageSize + 1)}-${Math.min(currentPage * paginationState[containerId.replace('-pagination', '')].pageSize, totalItems)} of ${totalItems} entries</div>`;
+    
+    html += '<div class="pagination" style="display: flex; gap: 5px;">';
+    
+    if (currentPage > 1) {
+        html += `<button class="btn-sm btn-primary-neon" onclick="${onPageChange}(${currentPage - 1})"><i class="fa-solid fa-chevron-left"></i></button>`;
+    }
+    
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `<button class="btn-sm ${i === currentPage ? 'btn-success-neon' : 'btn-primary-neon'}" onclick="${onPageChange}(${i})">${i}</button>`;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += '<span style="color: var(--text-muted);">...</span>';
+        }
+    }
+    
+    if (currentPage < totalPages) {
+        html += `<button class="btn-sm btn-primary-neon" onclick="${onPageChange}(${currentPage + 1})"><i class="fa-solid fa-chevron-right"></i></button>`;
+    }
+    
+    html += '</div></div>';
+    return html;
+}
+
+function renderPagination(type, totalItems) {
+    const state = paginationState[type];
+    const totalPages = Math.ceil(totalItems / state.pageSize) || 1;
+    const container = document.getElementById(`${type}-pagination`);
+    if (container) {
+        container.innerHTML = createPagination(`${type}-pagination`, totalItems, totalPages, state.page, `changePage('${type}', `);
+    }
+}
+
+function changePage(type, page) {
+    if (page < 1) return;
+    paginationState[type].page = page;
+    
+    if (type === 'accounts') loadTelegramAccounts();
+    else if (type === 'messages') loadMessages();
+    else if (type === 'schedules') loadSchedules();
+    else if (type === 'weather') loadWeatherLocations();
+    else if (type === 'exports') loadExportJobs();
 }

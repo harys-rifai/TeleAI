@@ -11,7 +11,24 @@ def export_jobs_api(request):
     user = request.user
     
     if request.method == "GET":
-        jobs = ExportJob.objects.filter(user=user)[:20]
+        queryset = ExportJob.objects.filter(user=user)
+        
+        # Pagination parameters
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+        except ValueError:
+            page = 1
+            page_size = 10
+        
+        page = max(1, page)
+        page_size = max(1, min(100, page_size))
+        
+        total_count = queryset.count()
+        total_pages = (total_count + page_size - 1) // page_size
+        
+        jobs = queryset.order_by('-created_at')[(page - 1) * page_size:page * page_size]
+        
         data = [{
             'id': job.id,
             'export_type': job.export_type,
@@ -19,7 +36,16 @@ def export_jobs_api(request):
             'download_url': job.download_url,
             'created_at': job.created_at.strftime('%Y-%m-%d %H:%M:%S')
         } for job in jobs]
-        return JsonResponse({'success': True, 'jobs': data})
+        return JsonResponse({
+            'success': True, 
+            'jobs': data,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total': total_count,
+                'total_pages': total_pages
+            }
+        })
         
     elif request.method == "POST":
         if user.is_viewer:

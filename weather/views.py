@@ -78,9 +78,25 @@ def weather_locations_list(request):
     
     if request.method == "GET":
         if user.is_admin:
-            locations = WeatherLocation.objects.all().select_related('user')
+            queryset = WeatherLocation.objects.all().select_related('user')
         else:
-            locations = WeatherLocation.objects.filter(user=user)
+            queryset = WeatherLocation.objects.filter(user=user)
+        
+        # Pagination parameters
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+        except ValueError:
+            page = 1
+            page_size = 10
+        
+        page = max(1, page)
+        page_size = max(1, min(100, page_size))
+        
+        total_count = queryset.count()
+        total_pages = (total_count + page_size - 1) // page_size
+        
+        locations = queryset[(page - 1) * page_size:page * page_size]
             
         data = [{
             'id': loc.id,
@@ -92,7 +108,16 @@ def weather_locations_list(request):
             'schedule_time': loc.schedule_time.strftime('%H:%M'),
             'is_active': loc.is_active
         } for loc in locations]
-        return JsonResponse({'success': True, 'locations': data})
+        return JsonResponse({
+            'success': True, 
+            'locations': data,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total': total_count,
+                'total_pages': total_pages
+            }
+        })
         
     elif request.method == "POST":
         if user.is_viewer:

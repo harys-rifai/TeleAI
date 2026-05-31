@@ -15,9 +15,25 @@ def scheduled_messages_list(request):
     
     if request.method == "GET":
         if user.is_admin:
-            schedules = ScheduledMessage.objects.all().select_related('telegram_account', 'user')
+            queryset = ScheduledMessage.objects.all().select_related('telegram_account', 'user')
         else:
-            schedules = ScheduledMessage.objects.filter(user=user).select_related('telegram_account')
+            queryset = ScheduledMessage.objects.filter(user=user).select_related('telegram_account')
+        
+        # Pagination parameters
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+        except ValueError:
+            page = 1
+            page_size = 10
+        
+        page = max(1, page)
+        page_size = max(1, min(100, page_size))
+        
+        total_count = queryset.count()
+        total_pages = (total_count + page_size - 1) // page_size
+        
+        schedules = queryset[(page - 1) * page_size:page * page_size]
             
         data = [{
             'id': s.id,
@@ -36,7 +52,16 @@ def scheduled_messages_list(request):
             'next_run_at': s.next_run_at.strftime('%Y-%m-%d %H:%M:%S') if s.next_run_at else "",
             'last_run_at': s.last_run_at.strftime('%Y-%m-%d %H:%M:%S') if s.last_run_at else ""
         } for s in schedules]
-        return JsonResponse({'success': True, 'schedules': data})
+        return JsonResponse({
+            'success': True, 
+            'schedules': data,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total': total_count,
+                'total_pages': total_pages
+            }
+        })
         
     elif request.method == "POST":
         if user.is_viewer:
