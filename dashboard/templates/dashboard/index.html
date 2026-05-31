@@ -254,45 +254,34 @@
 
 <!-- TAB 6: WEATHER BOT -->
 <div class="tab-panel" id="panel-weather">
-    <div class="grid-2">
-        <div class="glass-card">
-            <div class="glass-card-title">CONFIGURE WEATHER ALERT SITES</div>
-            <form id="weather-form" onsubmit="saveWeather(event)">
-                <div class="form-group">
-                    <label>LOCATION / CITY NAME</label>
-                    <input type="text" id="weather-name" class="form-control" placeholder="Jakarta, London, Tokyo" required>
-                </div>
-                <div class="form-group">
-                    <label>TARGET TELEGRAM CHAT (ID OR USERNAME)</label>
-                    <input type="text" id="weather-chat" class="form-control" placeholder="@channel_name or chat_id" required>
-                </div>
-                <div class="form-group">
-                    <label>DAILY SCHEDULE TIME</label>
-                    <input type="time" id="weather-time" class="form-control" value="08:00" required>
-                </div>
-                
-                <button type="submit" class="btn-neon">ACTIVATE WEATHER REPORT</button>
-            </form>
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span>ACTIVE WEATHER CHANNELS</span>
+            <button class="btn-sm btn-primary-neon" onclick="openWeatherModal()">
+                <i class="fa-solid fa-plus"></i> Add Weather Alert
+            </button>
         </div>
-
-        <div class="glass-card">
-            <div class="glass-card-title">ACTIVE WEATHER CHANNELS</div>
-            <div class="table-responsive">
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>CITY (COORDINATES)</th>
-                            <th>TARGET CHANNEL</th>
-                            <th>SCHEDULE</th>
-                            <th>STATUS</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="weather-table-body">
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying weather alerts...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>CITY (COORDINATES)</th>
+                        <th>TARGET CHANNEL</th>
+                        <th>SCHEDULE</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="weather-table-body">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying weather alerts...</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" id="weather-pagination"></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 </div>
@@ -368,6 +357,33 @@
             </div>
             <button class="btn-neon" onclick="verifyAuth2FA()">COMPLETE LOGIN</button>
         </div>
+    </div>
+</div>
+
+<!-- WEATHER MODAL -->
+<div class="modal-overlay" id="weather-modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeWeatherModal()">&times;</button>
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; color: var(--neon-blue);"><span id="weather-modal-title">Add Weather Alert</span></h3>
+        
+        <form id="weather-modal-form" onsubmit="saveWeatherFromModal(event)">
+            <input type="hidden" id="weather-edit-id">
+            
+            <div class="form-group">
+                <label>LOCATION / CITY NAME</label>
+                <input type="text" id="weather-name-modal" class="form-control" placeholder="Jakarta, London, Tokyo" required>
+            </div>
+            <div class="form-group">
+                <label>TARGET TELEGRAM CHAT (ID OR USERNAME)</label>
+                <input type="text" id="weather-chat-modal" class="form-control" placeholder="@channel_name or chat_id" required>
+            </div>
+            <div class="form-group">
+                <label>DAILY SCHEDULE TIME</label>
+                <input type="time" id="weather-time-modal" class="form-control" value="08:00" required>
+            </div>
+            
+            <button type="submit" class="btn-neon" id="weather-modal-submit">ACTIVATE WEATHER REPORT</button>
+        </form>
     </div>
 </div>
 {% endblock %}
