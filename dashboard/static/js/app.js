@@ -737,7 +737,7 @@ function testAIPrompt() {
                             <td><code>${loc.schedule_time}</code></td>
                             <td>${statusText}</td>
                             <td style="white-space: nowrap;">
-                                <button class="btn-sm btn-primary-neon" style="margin-right: 5px;" onclick="editWeather(${loc.id}, '${loc.location_name}', '${loc.target_chat_id}', '${loc.schedule_time}')">Edit</button>
+                                <button class="btn-sm btn-primary-neon" style="margin-right: 5px;" onclick="editWeather(${loc.id}, '${loc.location_name.replace(/'/g, "\\'")}', '${loc.target_chat_id}', '${loc.schedule_time}')">Edit</button>
                                 <button class="btn-sm btn-success-neon" style="margin-right: 5px;" onclick="toggleWeather(${loc.id})">${toggleBtnText}</button>
                                 <button class="btn-sm btn-danger-neon" onclick="deleteWeather(${loc.id})"><i class="fa-solid fa-trash-can"></i></button>
                             </td>
