@@ -533,17 +533,22 @@ function saveSchedule(e) {
         return;
     }
     
+    const payload = {
+        telegram_account_id: account,
+        target_chat_id: target,
+        message_text: text,
+        schedule_type: type,
+        interval_seconds: interval
+    };
+    
+    if (type === 'cron') {
+        payload.cron_expression = cron;
+    }
+    
     fetch('/api/scheduler/messages/', {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({
-            telegram_account_id: account,
-            target_chat_id: target,
-            message_text: text,
-            schedule_type: type,
-            interval_seconds: interval,
-            cron_expression: cron
-        })
+        body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
@@ -556,7 +561,7 @@ function saveSchedule(e) {
             showToast(data.error, 'error');
         }
     });
-}
+ }
 
 function triggerSchedule(id, action) {
     fetch(`/api/scheduler/messages/${id}/`, {
