@@ -170,7 +170,7 @@ function initCharts() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '70%',
+            cutout: '90%',
             plugins: {
                 legend: { 
                     labels: { 
