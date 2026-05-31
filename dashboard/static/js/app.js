@@ -682,9 +682,12 @@ function testAIPrompt() {
 }
 
 // ---------------------- WEATHER PANEL ----------------------
-
-function loadWeatherLocations() {
-    fetch('/api/weather/locations/')
+ 
+  function loadWeatherLocations() {
+    const page = paginationState.weather.page;
+    const pageSize = paginationState.weather.pageSize;
+    
+    fetch(`/api/weather/locations/?page=${page}&page_size=${pageSize}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -711,47 +714,116 @@ function loadWeatherLocations() {
                             <td><code>${loc.schedule_time}</code></td>
                             <td>${statusText}</td>
                             <td style="white-space: nowrap;">
-                                <button class="btn-sm btn-primary-neon" style="margin-right: 5px;" onclick="toggleWeather(${loc.id})">${toggleBtnText}</button>
-                                <button class="btn-sm btn-success-neon" style="margin-right: 5px;" onclick="getRealtimeWeather(${loc.id})">Realtime</button>
+                                <button class="btn-sm btn-primary-neon" style="margin-right: 5px;" onclick="editWeather(${loc.id}, '${loc.location_name}', '${loc.target_chat_id}', '${loc.schedule_time}')">Edit</button>
+                                <button class="btn-sm btn-success-neon" style="margin-right: 5px;" onclick="toggleWeather(${loc.id})">${toggleBtnText}</button>
                                 <button class="btn-sm btn-danger-neon" onclick="deleteWeather(${loc.id})"><i class="fa-solid fa-trash-can"></i></button>
                             </td>
                         </tr>
                     `;
                 });
+                renderPagination('weather', data.pagination?.total || locations.length);
             }
         });
- }
-
-function saveWeather(e) {
+  }
+  
+  function openWeatherModal(id = null, locationName = '', targetChat = '', scheduleTime = '08:00') {
+    const modal = document.getElementById('weather-modal');
+    const title = document.getElementById('weather-modal-title');
+    const editId = document.getElementById('weather-edit-id');
+    const nameInput = document.getElementById('weather-name-modal');
+    const chatInput = document.getElementById('weather-chat-modal');
+    const timeInput = document.getElementById('weather-time-modal');
+    const submitBtn = document.getElementById('weather-modal-submit');
+    
+    if (id) {
+        title.textContent = 'Edit Weather Alert';
+        editId.value = id;
+        nameInput.value = locationName;
+        chatInput.value = targetChat;
+        timeInput.value = scheduleTime;
+        submitBtn.textContent = 'UPDATE WEATHER ALERT';
+    } else {
+        title.textContent = 'Add Weather Alert';
+        editId.value = '';
+        nameInput.value = '';
+        chatInput.value = '';
+        timeInput.value = '08:00';
+        submitBtn.textContent = 'ACTIVATE WEATHER REPORT';
+    }
+    
+    modal.style.display = 'flex';
+  }
+  
+  function closeWeatherModal() {
+    document.getElementById('weather-modal').style.display = 'none';
+    document.getElementById('weather-modal-form').reset();
+  }
+  
+  function saveWeatherFromModal(e) {
     e.preventDefault();
-    const city = document.getElementById('weather-name').value;
-    const chat = document.getElementById('weather-chat').value;
-    const time = document.getElementById('weather-time').value;
+    const editId = document.getElementById('weather-edit-id').value;
+    const city = document.getElementById('weather-name-modal').value;
+    const chat = document.getElementById('weather-chat-modal').value;
+    const time = document.getElementById('weather-time-modal').value;
     
-    showToast('Resolving coordinates and saving weather bot...', 'info');
+    if (!city || !chat) {
+        showToast('Location name and target chat are required.', 'warning');
+        return;
+    }
     
-    fetch('/api/weather/locations/', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({
-            location_name: city,
-            target_chat_id: chat,
-            schedule_time: time
+    if (editId) {
+        // Update existing
+        fetch(`/api/weather/locations/${editId}/`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                action: 'update',
+                location_name: city,
+                target_chat_id: chat,
+                schedule_time: time
+            })
         })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            document.getElementById('weather-form').reset();
-            loadWeatherLocations();
-        } else {
-            showToast(data.error, 'error');
-        }
-    });
-}
-
-function toggleWeather(id) {
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeWeatherModal();
+                loadWeatherLocations();
+            } else {
+                showToast(data.error, 'error');
+            }
+        });
+    } else {
+        // Create new
+        showToast('Resolving coordinates and saving weather bot...', 'info');
+        
+        fetch('/api/weather/locations/', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                location_name: city,
+                target_chat_id: chat,
+                schedule_time: time
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeWeatherModal();
+                loadWeatherLocations();
+            } else {
+                showToast(data.error, 'error');
+            }
+        });
+    }
+  }
+  
+  function editWeather(id, locationName, targetChat, scheduleTime) {
+    openWeatherModal(id, locationName, targetChat, scheduleTime);
+  }
+  
+  function toggleWeather(id) {
     fetch(`/api/weather/locations/${id}/`, {
         method: 'PUT',
         headers: getHeaders(),
@@ -766,25 +838,9 @@ function toggleWeather(id) {
             showToast(data.error, 'error');
         }
     });
-}
-
-function getRealtimeWeather(id) {
-    fetch(`/api/weather/locations/${id}/`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ action: 'realtime' })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-        } else {
-            showToast(data.error, 'error');
-        }
-    });
-}
-
-function deleteWeather(id) {
+  }
+  
+  function deleteWeather(id) {
     if (!confirm('Are you sure you want to delete this weather alert config?')) return;
     
     fetch(`/api/weather/locations/${id}/`, {
@@ -800,12 +856,15 @@ function deleteWeather(id) {
             showToast(data.error, 'error');
         }
     });
-}
+  }
 
 // ---------------------- EXPORTS PANEL ----------------------
 
 function loadExportJobs() {
-    fetch('/api/notifications/exports/')
+    const page = paginationState.exports.page;
+    const pageSize = paginationState.exports.pageSize;
+    
+    fetch(`/api/notifications/exports/?page=${page}&page_size=${pageSize}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -843,6 +902,7 @@ function loadExportJobs() {
                         </tr>
                     `;
                 });
+                renderPagination('exports', data.pagination?.total || jobs.length);
             }
         });
 }
