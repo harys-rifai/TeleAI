@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import requests
 from django.http import JsonResponse
@@ -144,7 +145,7 @@ def weather_locations_list(request):
                 latitude=lat,
                 longitude=lon,
                 target_chat_id=target_chat_id,
-                schedule_time=schedule_time_str,
+                schedule_time=datetime.strptime(schedule_time_str, '%H:%M').time(),
                 is_active=True
             )
             return JsonResponse({
