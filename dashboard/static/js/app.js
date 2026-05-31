@@ -163,15 +163,26 @@ function initCharts() {
             datasets: [{
                 data: [0, 0, 0],
                 backgroundColor: ['#39ff14', '#ff3131', '#00f0ff'],
-                borderColor: '#13141f',
-                borderWidth: 2
+                borderColor: '#00f0ff',
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '70%',
             plugins: {
-                legend: { labels: { color: '#8d9bb0', font: { family: 'Outfit' } } }
+                legend: { 
+                    labels: { 
+                        color: '#8d9bb0', 
+                        font: { family: 'Outfit' } 
+                    } 
+                }
+            },
+            elements: {
+                arc: {
+                    borderWidth: 1
+                }
             }
         }
     });
