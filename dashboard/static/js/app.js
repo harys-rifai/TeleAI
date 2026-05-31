@@ -519,48 +519,48 @@ function loadSchedules() {
         });
 }
 
-function saveSchedule(e) {
-    e.preventDefault();
-    const account = document.getElementById('schedule-account').value;
-    const target = document.getElementById('schedule-target').value;
-    const text = document.getElementById('schedule-text').value;
-    const type = document.getElementById('schedule-type').value;
-    const interval = document.getElementById('schedule-interval').value;
-    const cron = document.getElementById('schedule-cron').value;
-    
-    if (!account) {
-        showToast('Please select a sender account', 'warning');
-        return;
-    }
-    
-    const payload = {
-        telegram_account_id: account,
-        target_chat_id: target,
-        message_text: text,
-        schedule_type: type,
-        interval_seconds: interval
-    };
-    
-    if (type === 'cron') {
-        payload.cron_expression = cron;
-    }
-    
-    fetch('/api/scheduler/messages/', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            document.getElementById('scheduler-form').reset();
-            toggleScheduleFields();
-            loadSchedules();
-        } else {
-            showToast(data.error, 'error');
-        }
-    });
+function saveScheduleFromModal(e) {
+     e.preventDefault();
+     const editId = document.getElementById('schedule-edit-id').value;
+     const account = document.getElementById('schedule-account-modal').value;
+     const target = document.getElementById('schedule-target-modal').value;
+     const text = document.getElementById('schedule-text-modal').value;
+     const type = document.getElementById('schedule-type-modal').value;
+     const interval = document.getElementById('schedule-interval-modal').value;
+     const cron = document.getElementById('schedule-cron-modal').value;
+     
+     if (!account) {
+         showToast('Please select a sender account', 'warning');
+         return;
+     }
+     
+     const payload = {
+         telegram_account_id: account,
+         target_chat_id: target,
+         message_text: text,
+         schedule_type: type,
+         interval_seconds: interval
+     };
+     
+     if (type === 'cron') {
+         payload.cron_expression = cron;
+     }
+     
+     fetch('/api/scheduler/messages/', {
+         method: 'POST',
+         headers: getHeaders(),
+         body: JSON.stringify(payload)
+     })
+     .then(res => res.json())
+     .then(data => {
+         if (data.success) {
+             showToast(data.message, 'success');
+             closeSchedulerModal();
+             loadSchedules();
+         } else {
+             showToast(data.error, 'error');
+         }
+     });
  }
 
 function triggerSchedule(id, action) {
@@ -581,22 +581,41 @@ function triggerSchedule(id, action) {
 }
 
 function deleteSchedule(id) {
-    if (!confirm('Are you sure you want to delete this schedule?')) return;
-    
-    fetch(`/api/scheduler/messages/${id}/`, {
-        method: 'DELETE',
-        headers: getHeaders()
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            loadSchedules();
-        } else {
-            showToast(data.error, 'error');
-        }
-    });
-}
+     if (!confirm('Are you sure you want to delete this schedule?')) return;
+     
+     fetch(`/api/scheduler/messages/${id}/`, {
+         method: 'DELETE',
+         headers: getHeaders()
+     })
+     .then(res => res.json())
+     .then(data => {
+         if (data.success) {
+             showToast(data.message, 'success');
+             loadSchedules();
+         } else {
+             showToast(data.error, 'error');
+         }
+     });
+ }
+ 
+ function openSchedulerModal() {
+     const modal = document.getElementById('scheduler-modal');
+     const title = document.getElementById('scheduler-modal-title');
+     const editId = document.getElementById('schedule-edit-id');
+     const submitBtn = document.getElementById('schedule-modal-submit');
+     
+     title.textContent = 'Create Schedule';
+     editId.value = '';
+     document.getElementById('scheduler-modal-form').reset();
+     toggleScheduleModalFields();
+     submitBtn.textContent = 'CREATE SCHEDULE TASK';
+     loadAccountsDropdown('schedule-account-modal');
+     modal.style.display = 'flex';
+ }
+ 
+ function closeSchedulerModal() {
+     document.getElementById('scheduler-modal').style.display = 'none';
+ }
 
 // ---------------------- AI ASSISTANT PANEL ----------------------
 

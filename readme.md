@@ -2,6 +2,8 @@
 
 A full-featured Django web application for managing Telegram accounts, sending AI-powered messages, scheduling tasks, and analyzing data.
 
+![Dashboard](img/dashboard.png)
+
 ## 🚀 Features
 
 ### 🔐 Authentication System
@@ -55,9 +57,7 @@ port : 6379
 password : 
 
 
-
 ```
-
 ### Git Bash / WSL
 ```bash
 bash run.sh
@@ -97,6 +97,7 @@ TELEGRAM_API_HASH=your_api_hash
 TELEGRAM_BOT_TOKEN=your_bot_token
 OPENAI_API_KEY=your-openai-api-key
 OPENWEATHER_API_KEY=your-weather-key
+SCHEDULER_TZ_OFFSET=7  # Timezone offset for weather scheduler (UTC+7 for WITA)
 
 ## 🐳 Docker Deployment
 
@@ -105,6 +106,7 @@ docker-compose up --build
 ```
 
 ## 📦 Project Structure
+
 django_ai_dashboard/
 ├── accounts/       # Auth & roles
 ├── telegram/       # Telethon integration
@@ -116,3 +118,9 @@ django_ai_dashboard/
 ├── weather/      # Weather automation
 ├── notifications/# Export jobs
 └── version/      # App versions
+
+## 📸 Screenshots
+
+| Login | Weather Bot | Firebase |
+|-------|-------------|----------|
+| ![Login](img/login.png) | ![Weather Bot](img/wheater-bot.png) | ![Firebase](img/firebase.png) |
