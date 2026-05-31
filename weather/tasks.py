@@ -59,23 +59,21 @@ def fetch_weather_report(lat, lon, location_name):
 @shared_task
 def send_weather_updates():
     """
-    Hourly cron task checking schedules.
+    Periodic task to send scheduled weather updates.
     """
     now = timezone.now()
-    current_time_str = now.strftime("%H:%M")
+    # Convert UTC to local time with SCHEDULER_TZ_OFFSET (e.g., UTC+7 for WITA)
+    utc_hour = now.hour
+    utc_minute = now.minute
+    local_hour = (utc_hour + settings.SCHEDULER_TZ_OFFSET) % 24
     
-    # Select active weather tasks scheduled at the current hour/minute
-    # Note: To be flexible, we can match items that are scheduled to run
-    # in the current hour and minute window.
+    # Select active weather tasks scheduled at the current local time
     locations = WeatherLocation.objects.filter(
         is_active=True,
-        schedule_time__hour=now.hour,
-        schedule_time__minute=now.minute
+        schedule_time__hour=local_hour,
+        schedule_time__minute=utc_minute
     ).select_related('user')
     
-    # If checking hourly, we can check just the hour:
-    # but to be precise, let's look at locations scheduled at this hour
-    # We will trigger them.
     for loc in locations:
         # Get user active Telegram account
         account = TelegramAccount.objects.filter(user=loc.user, is_active=True).first()

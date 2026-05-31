@@ -156,3 +156,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', '')
 FIREBASE_API_KEY = os.getenv('FIREBASE_API_KEY', '')
+
+# Timezone offset for weather scheduler (in hours, e.g., Asia/Makassar is UTC+7, set to 7)
+# Use 0 for UTC, positive for east of UTC, negative for west
+SCHEDULER_TZ_OFFSET = int(os.getenv('SCHEDULER_TZ_OFFSET', '7'))
