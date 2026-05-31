@@ -1,0 +1,12 @@
+django>=4.2,<5.1
+psycopg2-binary>=2.9
+celery>=5.3
+redis>=5.0
+telethon>=1.30
+openai>=1.0
+clickhouse-connect>=0.6
+python-dotenv>=1.0
+requests>=2.31
+django-celery-beat>=2.5
+pytz>=2023.3
+croniter>=2.0

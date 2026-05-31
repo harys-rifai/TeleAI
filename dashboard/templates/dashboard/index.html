@@ -1,0 +1,373 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}TeleAI Dashboard{% endblock %}
+
+{% block content %}
+<!-- TAB 1: OVERVIEW -->
+<div class="tab-panel active" id="panel-overview">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="fa-solid fa-signal"></i>
+            </div>
+            <div class="stat-info">
+                <h3>TELEGRAM ACCOUNTS</h3>
+                <p id="stat-accounts-active">0 / 0</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-violet">
+                <i class="fa-solid fa-paper-plane"></i>
+            </div>
+            <div class="stat-info">
+                <h3>MESSAGES SENT</h3>
+                <p id="stat-messages-sent">0</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-green">
+                <i class="fa-solid fa-reply"></i>
+            </div>
+            <div class="stat-info">
+                <h3>MESSAGES RECEIVED</h3>
+                <p id="stat-messages-received">0</p>
+            </div>
+        </div>
+        <div class="stat-card font-primary">
+            <div class="stat-icon" style="background: rgba(208, 0, 255, 0.1); color: var(--neon-violet); border: 1px solid rgba(208, 0, 255, 0.2);">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>ACTIVE SCHEDULES</h3>
+                <p id="stat-schedules-active">0</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="glass-card">
+            <div class="glass-card-title">MESSAGING VOLUMES (LAST 7 DAYS)</div>
+            <div class="chart-container">
+                <canvas id="chart-volume"></canvas>
+            </div>
+        </div>
+        <div class="glass-card">
+            <div class="glass-card-title">STATUS & DISTRIBUTION</div>
+            <div class="chart-container">
+                <canvas id="chart-distribution"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 2: TELEGRAM ACCOUNTS -->
+<div class="tab-panel" id="panel-accounts">
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span>REGISTERED ACCOUNTS</span>
+            <button class="btn-sm btn-primary-neon" onclick="openConnectModal()">
+                <i class="fa-solid fa-plus"></i> Connect Telegram Account
+            </button>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>USER</th>
+                        <th>PHONE NUMBER</th>
+                        <th>API ID</th>
+                        <th>STATUS</th>
+                        <th>SESSION FILE</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="accounts-table-body">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Querying accounts database...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 3: CHAT HISTORY -->
+<div class="tab-panel" id="panel-messages">
+    <div class="glass-card">
+        <div class="glass-card-title">CHAT LOGS HISTORY</div>
+        
+        <div class="search-container">
+            <input type="text" id="messages-search" class="search-input" placeholder="Search message text, recipient, or chat title..." onkeyup="if(event.key === 'Enter') loadMessages()">
+            <select id="messages-direction-filter" class="form-control" style="width: auto;" onchange="loadMessages()">
+                <option value="">All Directions</option>
+                <option value="outbound">Outbound</option>
+                <option value="inbound">Inbound</option>
+            </select>
+            <button class="btn-neon" style="width: auto; padding: 10px 24px;" onclick="loadMessages()">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>TIMESTAMP</th>
+                        <th>PHONE ACCOUNT</th>
+                        <th>DIRECTION</th>
+                        <th>PEER CHAT (ID)</th>
+                        <th>CHAT TITLE</th>
+                        <th>MESSAGE</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="messages-table-body">
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Querying logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 4: MESSAGE SCHEDULER -->
+<div class="tab-panel" id="panel-scheduler">
+    <div class="grid-2">
+        <div class="glass-card">
+            <div class="glass-card-title">CREATE MESSAGE SCHEDULE</div>
+            <form id="scheduler-form" onsubmit="saveSchedule(event)">
+                <div class="form-group">
+                    <label>SENDER ACCOUNT</label>
+                    <select id="schedule-account" class="form-control" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>TARGET CHAT ID / USERNAME (e.g. @username or numeric ID)</label>
+                    <input type="text" id="schedule-target" class="form-control" placeholder="@customer_support" required>
+                </div>
+                <div class="form-group">
+                    <label>MESSAGE CONTENT</label>
+                    <textarea id="schedule-text" class="form-control" style="height: 100px;" placeholder="Type scheduled message..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>SCHEDULE TYPE</label>
+                    <select id="schedule-type" class="form-control" onchange="toggleScheduleFields()" required>
+                        <option value="once">Once (Immediate)</option>
+                        <option value="interval">Interval (Recurring)</option>
+                        <option value="cron">Cron Expression</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="schedule-interval-group" style="display: none;">
+                    <label>INTERVAL TIME (SECONDS)</label>
+                    <input type="number" id="schedule-interval" class="form-control" value="60" min="10">
+                </div>
+                
+                <div class="form-group" id="schedule-cron-group" style="display: none;">
+                    <label>CRON EXPRESSION (e.g. */5 * * * * for every 5 min)</label>
+                    <input type="text" id="schedule-cron" class="form-control" placeholder="*/5 * * * *">
+                </div>
+                
+                <button type="submit" class="btn-neon">CREATE SCHEDULE TASK</button>
+            </form>
+        </div>
+
+        <div class="glass-card">
+            <div class="glass-card-title">ACTIVE SCHEDULES</div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>TARGET PEER</th>
+                            <th>TYPE</th>
+                            <th>NEXT EXECUTION</th>
+                            <th>STATUS</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedules-table-body">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying scheduler configuration...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 5: AI CONFIG -->
+<div class="tab-panel" id="panel-ai">
+    <div class="grid-2">
+        <div class="glass-card">
+            <div class="glass-card-title">OPENAI ASSISTANT SYSTEM</div>
+            <form id="ai-config-form" onsubmit="saveAIConfig(event)">
+                <div class="form-group">
+                    <label>OPENAI API KEY (CUSTOM OVERRIDE)</label>
+                    <input type="password" id="ai-key" class="form-control" placeholder="sk-...">
+                </div>
+                <div class="form-group">
+                    <label>API BASE URL (OPTIONAL - FOR OPENAI-COMPATIBLE PROVIDERS)</label>
+                    <input type="text" id="ai-base-url" class="form-control" placeholder="https://api.9router.com/v1 (default: OpenAI)">
+                </div>
+                <div class="form-group">
+                    <label>MODEL SELECTION</label>
+                    <select id="ai-model" class="form-control">
+                        <option value="gpt-4o">gpt-4o (Default)</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>TEMPERATURE (CREATIVITY / RANDOMNESS)</label>
+                    <input type="range" id="ai-temp" min="0" max="1.5" step="0.1" value="0.7" style="width: 100%; accent-color: var(--neon-blue);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
+                        <span>Deterministic (0)</span>
+                        <span id="ai-temp-val">0.7</span>
+                        <span>Creative (1.5)</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>SYSTEM SYSTEM PROMPT</label>
+                    <textarea id="ai-prompt" class="form-control" style="height: 120px;" placeholder="Define the AI assistant persona..."></textarea>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="ai-auto-reply" style="width: 18px; height: 18px; accent-color: var(--neon-blue);">
+                    <label for="ai-auto-reply" style="margin-bottom: 0;">ENABLE AUTO-REPLY TO INBOUND MESSAGES</label>
+                </div>
+                
+                <button type="submit" class="btn-neon">SAVE CONFIGURATION</button>
+            </form>
+        </div>
+
+        <div class="glass-card">
+            <div class="glass-card-title">PROMPT AGENT SANDBOX</div>
+            <div class="form-group">
+                <label>TEST PROMPT</label>
+                <textarea id="ai-test-input" class="form-control" style="height: 100px;" placeholder="Type prompt to send to OpenAI..."></textarea>
+            </div>
+            <button class="btn-neon" style="margin-bottom: 25px;" onclick="testAIPrompt()">SEND PROMPT</button>
+            
+            <div class="form-group">
+                <label>ASSISTANT REPLY</label>
+                <div id="ai-test-output" style="background: rgba(7, 8, 13, 0.6); border: 1px solid var(--panel-border); border-radius: 8px; padding: 15px; min-height: 140px; font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">AI reply will be rendered here...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 6: WEATHER BOT -->
+<div class="tab-panel" id="panel-weather">
+    <div class="grid-2">
+        <div class="glass-card">
+            <div class="glass-card-title">CONFIGURE WEATHER ALERT SITES</div>
+            <form id="weather-form" onsubmit="saveWeather(event)">
+                <div class="form-group">
+                    <label>LOCATION / CITY NAME</label>
+                    <input type="text" id="weather-name" class="form-control" placeholder="Jakarta, London, Tokyo" required>
+                </div>
+                <div class="form-group">
+                    <label>TARGET TELEGRAM CHAT (ID OR USERNAME)</label>
+                    <input type="text" id="weather-chat" class="form-control" placeholder="@channel_name or chat_id" required>
+                </div>
+                <div class="form-group">
+                    <label>DAILY SCHEDULE TIME</label>
+                    <input type="time" id="weather-time" class="form-control" value="08:00" required>
+                </div>
+                
+                <button type="submit" class="btn-neon">ACTIVATE WEATHER REPORT</button>
+            </form>
+        </div>
+
+        <div class="glass-card">
+            <div class="glass-card-title">ACTIVE WEATHER CHANNELS</div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>CITY (COORDINATES)</th>
+                            <th>TARGET CHANNEL</th>
+                            <th>SCHEDULE</th>
+                            <th>STATUS</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weather-table-body">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying weather alerts...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 7: EXPORTS -->
+<div class="tab-panel" id="panel-exports">
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span>EXPORT MESSAGE METRICS</span>
+            <button class="btn-sm btn-primary-neon" onclick="triggerExport()">
+                <i class="fa-solid fa-file-export"></i> Run Message Logs Compilation (CSV)
+            </button>
+        </div>
+        
+        <div class="table-responsive" style="margin-top: 20px;">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>JOB ID</th>
+                        <th>EXPORT TYPE</th>
+                        <th>REQUEST DATE</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="exports-table-body">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying export logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- AUTHENTICATION MODAL -->
+<div class="modal-overlay" id="connect-modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeConnectModal()">&times;</button>
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; color: var(--neon-blue);">Connect Telegram Account</h3>
+        
+        <!-- STEP 1: CREDENTIALS -->
+        <div id="auth-step-1">
+            <div class="form-group">
+                <label>API ID (From my.telegram.org)</label>
+                <input type="number" id="auth-api-id" class="form-control" required placeholder="e.g. 123456">
+            </div>
+            <div class="form-group">
+                <label>API HASH (From my.telegram.org)</label>
+                <input type="text" id="auth-api-hash" class="form-control" required placeholder="e.g. 0123456789abcdef0123456789abcdef">
+            </div>
+            <div class="form-group">
+                <label>PHONE NUMBER (With international code, e.g. +6281...)</label>
+                <input type="text" id="auth-phone" class="form-control" required placeholder="e.g. +628123456789">
+            </div>
+            <button class="btn-neon" onclick="requestAuthCode()">SEND VERIFICATION CODE</button>
+        </div>
+        
+        <!-- STEP 2: CODE VERIFICATION -->
+        <div id="auth-step-2" style="display: none;">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">We have sent a verification code to your Telegram app. Enter the code below:</p>
+            <div class="form-group">
+                <label>VERIFICATION CODE</label>
+                <input type="text" id="auth-code" class="form-control" placeholder="12345">
+            </div>
+            <button class="btn-neon" onclick="verifyAuthCode()">VERIFY CODE</button>
+        </div>
+        
+        <!-- STEP 3: 2FA PASSWORD -->
+        <div id="auth-step-3" style="display: none;">
+            <p style="font-size: 0.85rem; color: var(--neon-violet); margin-bottom: 15px;">Two-Step Verification is enabled on your account. Enter your cloud password:</p>
+            <div class="form-group">
+                <label>2FA PASSWORD</label>
+                <input type="password" id="auth-password" class="form-control" placeholder="cloud password">
+            </div>
+            <button class="btn-neon" onclick="verifyAuth2FA()">COMPLETE LOGIN</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

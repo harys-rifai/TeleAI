@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TeleAI Dashboard{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1vA8wuYVO-6t-CySwCyqKGimTMfq-OfU",
+            authDomain: "webapps-teleai.firebaseapp.com",
+            projectId: "webapps-teleai",
+            storageBucket: "webapps-teleai.firebasestorage.app",
+            messagingSenderId: "513955291941",
+            appId: "1:513955291941:web:e8589bb4a6610316ebf0cc",
+            measurementId: "G-GR3DJHEYSV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-brain-circuit"></i> TeleAI
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="sidebar-item active" data-tab="overview">
+                    <a href="#overview" class="sidebar-link">
+                        <i class="fa-solid fa-chart-line"></i> Overview
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="accounts">
+                    <a href="#accounts" class="sidebar-link">
+                        <i class="fa-solid fa-user-gear"></i> Telegram Accounts
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="messages">
+                    <a href="#messages" class="sidebar-link">
+                        <i class="fa-solid fa-comments"></i> Chat History
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="scheduler">
+                    <a href="#scheduler" class="sidebar-link">
+                        <i class="fa-solid fa-calendar-days"></i> Scheduler
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="ai">
+                    <a href="#ai" class="sidebar-link">
+                        <i class="fa-solid fa-robot"></i> AI Config
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="weather">
+                    <a href="#weather" class="sidebar-link">
+                        <i class="fa-solid fa-cloud-sun-rain"></i> Weather Bot
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="exports">
+                    <a href="#exports" class="sidebar-link">
+                        <i class="fa-solid fa-download"></i> Exports
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-info" title="{{ user.email }}">
+                    <i class="fa-solid fa-circle-user"></i> {{ user.email }}
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <span class="role-badge badge-{{ user.role }}">{{ user.get_role_display }}</span>
+                </div>
+                <a href="{% url 'logout' %}" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Disconnect Session
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <header class="main-header">
+                <div>
+                    <h1 class="page-title" id="page-title-text">Dashboard Overview</h1>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">System version v1.0.0 (Stable)</p>
+                </div>
+                <div>
+                    <span class="role-badge badge-{{ user.role }}">{{ user.get_role_display }} Console</span>
+                </div>
+            </header>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- CSRF Token for JS AJAX -->
+    <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+    
+    <!-- User Context Data (For JS Role Checking) -->
+    <script>
+        window.userRole = "{{ user.role }}";
+        window.userEmail = "{{ user.email }}";
+    </script>
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>
