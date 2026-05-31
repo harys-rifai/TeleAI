@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.conf import settings
 from telegram.models import TelegramAccount
 from messaging.models import MessageLog
 from scheduler.models import ScheduledMessage
@@ -14,7 +15,9 @@ def dashboard_home(request):
     """
     Render main dashboard template.
     """
-    return render(request, 'dashboard/index.html')
+    return render(request, 'dashboard/index.html', {
+        'firebase_api_key': settings.FIREBASE_API_KEY or ''
+    })
 
 def login_view(request):
     """

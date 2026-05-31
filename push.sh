@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Add all changes
-git add -A
+# Add changes excluding .agents directory and .env
+git add . ':!/.agents/' ':!.env'
 
 # Commit with message
 git commit -m "Update project files"

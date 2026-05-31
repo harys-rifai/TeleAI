@@ -12,3 +12,4 @@ server.log
 skills-lock.json
 src/
 node_modules
+.agents/
