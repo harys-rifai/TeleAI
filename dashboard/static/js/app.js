@@ -91,7 +91,6 @@ function loadTabData(tab) {
         loadMessages();
     } else if (tab === 'scheduler') {
         loadSchedules();
-        loadAccountsDropdown('schedule-account');
     } else if (tab === 'ai') {
         loadAIConfig();
     } else if (tab === 'weather') {

@@ -55,9 +55,8 @@ schema : synergydts
 host : localhost
 port : 6379
 password : 
-
-
 ```
+
 ### Git Bash / WSL
 ```bash
 bash run.sh
@@ -98,11 +97,6 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 OPENAI_API_KEY=your-openai-api-key
 OPENWEATHER_API_KEY=your-weather-key
 SCHEDULER_TZ_OFFSET=7  # Timezone offset for weather scheduler (UTC+7 for WITA)
-
-## 🐳 Docker Deployment
-
-```bash
-docker-compose up --build
 ```
 
 ## 📦 Project Structure
