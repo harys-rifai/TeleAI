@@ -191,7 +191,11 @@ def weather_location_detail(request, pk):
                 return JsonResponse({'success': True, 'message': weather_msg})
             else:
                 location.location_name = body.get('location_name', location.location_name).strip()
-                location.schedule_time = body.get('schedule_time', location.schedule_time.strftime('%H:%M')).strip()
+                schedule_time_str = body.get('schedule_time', location.schedule_time.strftime('%H:%M')).strip()
+                try:
+                    location.schedule_time = datetime.strptime(schedule_time_str, '%H:%M').time()
+                except ValueError:
+                    pass
                 location.target_chat_id = body.get('target_chat_id', location.target_chat_id).strip()
                 
                 # Re-geocode if name changed
