@@ -38,6 +38,9 @@ class ScheduledMessage(models.Model):
         null=True,
         help_text="Standard crontab format, e.g. '*/5 * * * *'"
     )
+    latitude = models.FloatField(blank=True, null=True, help_text="Latitude for weather-based messages")
+    longitude = models.FloatField(blank=True, null=True, help_text="Longitude for weather-based messages")
+    location_name = models.CharField(max_length=100, blank=True, null=True, help_text="Location name for weather-based messages")
     last_run_at = models.DateTimeField(blank=True, null=True)
     next_run_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(

@@ -29,6 +29,9 @@ def scheduled_messages_list(request):
             'schedule_type': s.schedule_type,
             'interval_seconds': s.interval_seconds,
             'cron_expression': s.cron_expression,
+            'latitude': s.latitude,
+            'longitude': s.longitude,
+            'location_name': s.location_name,
             'status': s.status,
             'next_run_at': s.next_run_at.strftime('%Y-%m-%d %H:%M:%S') if s.next_run_at else "",
             'last_run_at': s.last_run_at.strftime('%Y-%m-%d %H:%M:%S') if s.last_run_at else ""

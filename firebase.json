@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "public": "dashboard/templates/dashboard",
+    "ignore": [
+      "firebase.json",
+      "README.md",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "auth": {
+    "providers": {}
+  }
+}
