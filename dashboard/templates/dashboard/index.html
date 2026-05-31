@@ -139,71 +139,34 @@
 
 <!-- TAB 4: MESSAGE SCHEDULER -->
 <div class="tab-panel" id="panel-scheduler">
-    <div class="grid-2">
-        <div class="glass-card">
-            <div class="glass-card-title">CREATE MESSAGE SCHEDULE</div>
-            <form id="scheduler-form" onsubmit="saveSchedule(event)">
-                <div class="form-group">
-                    <label>SENDER ACCOUNT</label>
-                    <select id="schedule-account" class="form-control" required>
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>TARGET CHAT ID / USERNAME (e.g. @username or numeric ID)</label>
-                    <input type="text" id="schedule-target" class="form-control" placeholder="@customer_support" required>
-                </div>
-                <div class="form-group">
-                    <label>MESSAGE CONTENT</label>
-                    <textarea id="schedule-text" class="form-control" style="height: 100px;" placeholder="Type scheduled message..." required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>SCHEDULE TYPE</label>
-                    <select id="schedule-type" class="form-control" onchange="toggleScheduleFields()" required>
-                        <option value="once">Once (Immediate)</option>
-                        <option value="interval">Interval (Recurring)</option>
-                        <option value="cron">Cron Expression</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="schedule-interval-group" style="display: none;">
-                    <label>INTERVAL TIME (SECONDS)</label>
-                    <input type="number" id="schedule-interval" class="form-control" value="60" min="10">
-                </div>
-                
-                <div class="form-group" id="schedule-cron-group" style="display: none;">
-                    <label>CRON EXPRESSION (e.g. */5 * * * * for every 5 min)</label>
-                    <input type="text" id="schedule-cron" class="form-control" placeholder="*/5 * * * *">
-                </div>
-                
-                <button type="submit" class="btn-neon">CREATE SCHEDULE TASK</button>
-            </form>
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span>ACTIVE SCHEDULES</span>
+            <button class="btn-sm btn-primary-neon" onclick="openSchedulerModal()">
+                <i class="fa-solid fa-plus"></i> Create Schedule
+            </button>
         </div>
-
-        <div class="glass-card">
-            <div class="glass-card-title">ACTIVE SCHEDULES</div>
-            <div class="table-responsive">
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>TARGET PEER</th>
-                            <th>TYPE</th>
-                            <th>NEXT EXECUTION</th>
-                            <th>STATUS</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="schedules-table-body">
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying scheduler configuration...</td></tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="5" id="schedules-pagination"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+        
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>TARGET PEER</th>
+                        <th>TYPE</th>
+                        <th>NEXT EXECUTION</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="schedules-table-body">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Querying scheduler configuration...</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" id="schedules-pagination"></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 </div>
@@ -403,6 +366,54 @@
             </div>
             
             <button type="submit" class="btn-neon" id="weather-modal-submit">ACTIVATE WEATHER REPORT</button>
+        </form>
+    </div>
+</div>
+
+<!-- MESSAGE SCHEDULER MODAL -->
+<div class="modal-overlay" id="scheduler-modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeSchedulerModal()">&times;</button>
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; color: var(--neon-blue);"><span id="scheduler-modal-title">Create Schedule</span></h3>
+        
+        <form id="scheduler-modal-form" onsubmit="saveScheduleFromModal(event)">
+            <input type="hidden" id="schedule-edit-id">
+            
+            <div class="form-group">
+                <label>SENDER ACCOUNT</label>
+                <select id="schedule-account-modal" class="form-control" required>
+                    <option value="">Loading accounts...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>TARGET CHAT ID / USERNAME (e.g. @username or numeric ID)</label>
+                <input type="text" id="schedule-target-modal" class="form-control" placeholder="@customer_support" required>
+            </div>
+            <div class="form-group">
+                <label>MESSAGE CONTENT</label>
+                <textarea id="schedule-text-modal" class="form-control" style="height: 100px;" placeholder="Type scheduled message..." required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>SCHEDULE TYPE</label>
+                <select id="schedule-type-modal" class="form-control" onchange="toggleScheduleModalFields()" required>
+                    <option value="once">Once (Immediate)</option>
+                    <option value="interval">Interval (Recurring)</option>
+                    <option value="cron">Cron Expression</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="schedule-interval-modal-group" style="display: none;">
+                <label>INTERVAL TIME (SECONDS)</label>
+                <input type="number" id="schedule-interval-modal" class="form-control" value="60" min="10">
+            </div>
+            
+            <div class="form-group" id="schedule-cron-modal-group" style="display: none;">
+                <label>CRON EXPRESSION (e.g. */5 * * * * for every 5 min)</label>
+                <input type="text" id="schedule-cron-modal" class="form-control" placeholder="*/5 * * * *">
+            </div>
+            
+            <button type="submit" class="btn-neon" id="schedule-modal-submit">CREATE SCHEDULE TASK</button>
         </form>
     </div>
 </div>

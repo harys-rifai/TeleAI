@@ -453,15 +453,15 @@ function loadMessages() {
 }
 
 // ---------------------- MESSAGE SCHEDULER PANEL ----------------------
-
-function toggleScheduleFields() {
-    const type = document.getElementById('schedule-type').value;
-    const intervalGroup = document.getElementById('schedule-interval-group');
-    const cronGroup = document.getElementById('schedule-cron-group');
-    
-    intervalGroup.style.display = type === 'interval' ? 'block' : 'none';
-    cronGroup.style.display = type === 'cron' ? 'block' : 'none';
-}
+ 
+ function toggleScheduleModalFields() {
+     const type = document.getElementById('schedule-type-modal').value;
+     const intervalGroup = document.getElementById('schedule-interval-modal-group');
+     const cronGroup = document.getElementById('schedule-cron-modal-group');
+     
+     intervalGroup.style.display = type === 'interval' ? 'block' : 'none';
+     cronGroup.style.display = type === 'cron' ? 'block' : 'none';
+ }
 
 function loadSchedules() {
     const page = paginationState.schedules.page;
