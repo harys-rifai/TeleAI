@@ -137,7 +137,7 @@ def weather_locations_list(request):
             lat, lon, resolved_name = resolve_coordinates(location_name)
             if lat is None or lon is None:
                 # If geocoding failed, use defaults or prompt user
-                return JsonResponse({'success': False, 'error': f"Could not find coordinates for '{location_name}'. please try another city name."})
+                return JsonResponse({'success': False, 'error': f"Could not find coordinates for '{location_name}'. Please try another city name."})
                 
             location = WeatherLocation.objects.create(
                 user=user,
