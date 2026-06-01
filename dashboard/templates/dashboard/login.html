@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleAI Dashboard - Login</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="display: block;">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fa-solid fa-brain-circuit"></i> TeleAI Dashboard
+            </div>
+            
+            {% if error %}
+                <div class="alert-danger">
+                    <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="email">EMAIL ADDRESS</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="enter email address" required autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">PASSWORD</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="enter password" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn-neon">AUTHENTICATE SYSTEM</button>
+            </form>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: left;">
+                <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 10px; letter-spacing: 0.5px;">DEFAULT SYSTEM CREDENTIALS</p>
+                <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span><strong>Admin:</strong> admin@sdt.com</span>
+                        <span><code>123123123</code></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span><strong>User:</strong> user@sdt.com</span>
+                        <span><code>xcxcxcxc</code></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><strong>Viewer:</strong> view@sdt.com</span>
+                        <span><code>sdt123456</code></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

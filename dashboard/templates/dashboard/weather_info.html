@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Info - TeleAI Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-brain-circuit"></i> TeleAI
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="sidebar-item" data-tab="overview">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-chart-line"></i> Overview
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="accounts">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-user-gear"></i> Telegram Accounts
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="messages">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-comments"></i> Chat History
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="scheduler">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-calendar-days"></i> Scheduler
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="ai">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-robot"></i> AI Config
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="weather">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-cloud-sun-rain"></i> Weather Bot
+                    </a>
+                </li>
+                <li class="sidebar-item" data-tab="exports">
+                    <a href="/dashboard/" class="sidebar-link">
+                        <i class="fa-solid fa-download"></i> Exports
+                    </a>
+                </li>
+                <li class="sidebar-item active" data-tab="weather-info">
+                    <a href="{% url 'weather_info' %}" class="sidebar-link">
+                        <i class="fa-solid fa-cloud-sun"></i> Weather Info
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-info" title="{{ user.email }}">
+                    <i class="fa-solid fa-circle-user"></i> {{ user.email }}
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <span class="role-badge badge-{{ user.role }}">{{ user.get_role_display }}</span>
+                </div>
+                <a href="{% url 'logout' %}" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Disconnect Session
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <div>
+                    <h1 class="page-title">Weather Info</h1>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">System version v1.0.0 (Stable)</p>
+                </div>
+                <div>
+                    <span class="role-badge badge-{{ user.role }}">{{ user.get_role_display }} Console</span>
+                </div>
+            </header>
+
+            <div class="glass-card">
+                <div class="glass-card-title">
+                    <span>Live Weather Information</span>
+                    <button class="btn-sm btn-primary-neon" onclick="refreshWeather()">
+                        <i class="fa-solid fa-rotate"></i> Refresh
+                    </button>
+                </div>
+                
+                <div class="search-container" style="margin-bottom: 20px;">
+                    <input type="text" id="city-search" class="search-input" placeholder="Enter city name (e.g., Jakarta, London, Tokyo)" value="Jakarta" onkeypress="if(event.key === 'Enter') searchWeather()">
+                    <button class="btn-neon" style="width: auto; padding: 10px 24px;" onclick="searchWeather()">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </button>
+                </div>
+                
+                <div id="weather-loading" style="display: none; text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>Loading weather data...</p>
+                </div>
+                
+                <div id="weather-error" class="alert-danger" style="display: none; margin-bottom: 20px;"></div>
+                
+                <div id="weather-display" style="display: none;">
+                    <div class="grid-2">
+                        <div class="glass-card" style="padding: 20px;">
+                            <div class="weather-header" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                                <img id="weather-icon" src="" alt="Weather Icon" style="width: 64px; height: 64px;">
+                                <div>
+                                    <h2 id="weather-location" style="margin: 0 0 5px 0; font-size: 1.5rem;"></h2>
+                                    <p id="weather-region" style="margin: 0; color: var(--text-muted);"></p>
+                                </div>
+                            </div>
+                            
+                            <div class="weather-stats">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                                    <div>
+                                        <small style="color: var(--text-muted);">Temperature</small>
+                                        <h3 id="weather-temp" style="margin: 5px 0; font-size: 1.8rem;"></h3>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-muted);">Feels Like</small>
+                                        <h3 id="weather-feelslike" style="margin: 5px 0; font-size: 1.8rem;"></h3>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-muted);">Humidity</small>
+                                        <h3 id="weather-humidity" style="margin: 5px 0;"></h3>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-muted);">Wind Speed</small>
+                                        <h3 id="weather-wind" style="margin: 5px 0;"></h3>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-muted);">Pressure</small>
+                                        <h3 id="weather-pressure" style="margin: 5px 0;"></h3>
+                                    </div>
+                                    <div>
+                                        <small style="color: var(--text-muted);">Visibility</small>
+                                        <h3 id="weather-vis" style="margin: 5px 0;"></h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card" style="padding: 20px;">
+                            <h3 style="margin-bottom: 15px; color: var(--neon-blue);">Air Quality</h3>
+                            <div id="weather-aqi" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="padding: 20px; margin-top: 20px;">
+                        <h3 style="margin-bottom: 15px; color: var(--neon-blue);">Weather Condition</h3>
+                        <div id="weather-condition" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;"></div>
+                    </div>
+                    
+                    <div class="glass-card" style="padding: 20px; margin-top: 20px;">
+                        <h3 style="margin-bottom: 15px; color: var(--neon-blue);">Additional Details</h3>
+                        <div id="weather-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    function showLoading() {
+        document.getElementById('weather-loading').style.display = 'block';
+        document.getElementById('weather-error').style.display = 'none';
+        document.getElementById('weather-display').style.display = 'none';
+    }
+
+    function showError(message) {
+        document.getElementById('weather-loading').style.display = 'none';
+        document.getElementById('weather-error').textContent = message;
+        document.getElementById('weather-error').style.display = 'block';
+    }
+
+    function displayWeather(data) {
+        document.getElementById('weather-loading').style.display = 'none';
+        document.getElementById('weather-error').style.display = 'none';
+        document.getElementById('weather-display').style.display = 'block';
+        
+        const loc = data.location;
+        const cur = data.current;
+        
+        document.getElementById('weather-location').textContent = loc.name;
+        document.getElementById('weather-region').textContent = loc.region + ', ' + loc.country;
+        document.getElementById('weather-icon').src = cur.condition.icon;
+        document.getElementById('weather-temp').textContent = cur.temp_c + '°C';
+        document.getElementById('weather-feelslike').textContent = cur.feelslike_c + '°C';
+        document.getElementById('weather-humidity').textContent = cur.humidity + '%';
+        document.getElementById('weather-wind').textContent = cur.wind_kph + ' km/h';
+        document.getElementById('weather-pressure').textContent = cur.pressure_mb + ' mb';
+        document.getElementById('weather-vis').textContent = cur.vis_km + ' km';
+        
+        const aqi = cur.air_quality;
+        document.getElementById('weather-aqi').innerHTML = 
+            '<div><small>CO</small><strong>' + aqi.co + ' ppm</strong></div>' +
+            '<div><small>NO₂</small><strong>' + aqi.no2 + ' ppb</strong></div>' +
+            '<div><small>O₃</small><strong>' + aqi.o3 + ' ppb</strong></div>' +
+            '<div><small>PM2.5</small><strong>' + aqi.pm2_5 + ' μg/m³</strong></div>' +
+            '<div><small>PM10</small><strong>' + aqi.pm10 + ' μg/m³</strong></div>' +
+            '<div><small>SO₂</small><strong>' + aqi.so2 + ' ppb</strong></div>';
+        
+        document.getElementById('weather-condition').innerHTML = 
+            '<div><h4 style="margin: 0 0 5px 0;">' + cur.condition.text + '</h4>' +
+            '<small style="color: var(--text-muted);">Last updated: ' + cur.last_updated + '</small></div>';
+        
+        document.getElementById('weather-details').innerHTML = 
+            '<div><small>Wind Direction</small><strong>' + cur.wind_dir + ' (' + cur.wind_degree + '°)</strong></div>' +
+            '<div><small>Gust Speed</small><strong>' + cur.gust_kph + ' km/h</strong></div>' +
+            '<div><small>Cloud Cover</small><strong>' + cur.cloud + '%</strong></div>' +
+            '<div><small>UV Index</small><strong>' + cur.uv + '</strong></div>' +
+            '<div><small>Rain Chance</small><strong>' + cur.chance_of_rain + '%</strong></div>' +
+            '<div><small>Sunrise/Sunset</small><strong>N/A</strong></div>';
+    }
+
+    function searchWeather() {
+        const city = document.getElementById('city-search').value.trim();
+        if (!city) return;
+        
+        showLoading();
+        fetch('/dashboard/api/weather-current/?q=' + encodeURIComponent(city))
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    displayWeather(data.data);
+                } else {
+                    showError(data.error || 'Failed to fetch weather data');
+                }
+            })
+            .catch(function(err) { showError('Network error: ' + err.message); });
+    }
+
+    function refreshWeather() {
+        searchWeather();
+    }
+
+    document.addEventListener('DOMContentLoaded', searchWeather);
+    </script>
+</body>
+</html>

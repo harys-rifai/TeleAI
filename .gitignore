@@ -1,0 +1,15 @@
+venv/
+*.pyc
+__pycache__/
+.env
+db.sqlite3
+staticfiles/
+.DS_Store
+node_modules/
+clickhouse
+dump.rdb
+server.log
+skills-lock.json
+src/
+node_modules
+.agents/
