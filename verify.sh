@@ -8,7 +8,15 @@ echo "🔍 Starting verification of Django AI Messaging Dashboard..."
 # Check if virtual environment is activated
 if [[ "$VIRTUAL_ENV" == "" ]]; then
     echo "⚠️  Virtual environment not activated. Activating..."
-    source venv/bin/activate
+    if [ -f "venv/bin/activate" ]; then
+        source venv/bin/activate
+    elif [ -f "venv/Scripts/activate" ]; then
+        source venv/Scripts/activate
+    else
+        echo "❌ Virtual environment activation script not found."
+        echo "💡 Please run 'bash setup.sh' first."
+        exit 1
+    fi
 fi
 
 # Check if server is running

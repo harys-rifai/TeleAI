@@ -1,76 +1,11 @@
 from datetime import datetime
 import json
-import requests
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from .models import WeatherLocation
-
-def resolve_coordinates(location_name):
-    """
-    Geocode location using free Open-Meteo Geocoding API.
-    """
-    try:
-        url = f"https://geocoding-api.open-meteo.com/v1/search?name={requests.utils.quote(location_name)}&count=1"
-        res = requests.get(url, timeout=5)
-        if res.status_code == 200:
-            data = res.json()
-            results = data.get('results', [])
-            if results:
-                loc = results[0]
-                return loc.get('latitude'), loc.get('longitude'), loc.get('name')
-    except Exception as e:
-        print(f"[Geocoding Error] Failed to resolve coordinates: {e}")
-    return None, None, location_name
-
-def fetch_weather_report(lat, lon, location_name):
-    """
-    Fetch weather details using OpenWeather or Open-Meteo API.
-    """
-    from django.conf import settings
-    api_key = settings.OPENWEATHER_API_KEY
-    if api_key:
-        try:
-            url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
-            res = requests.get(url, timeout=5)
-            if res.status_code == 200:
-                data = res.json()
-                temp = data['main']['temp']
-                desc = data['weather'][0]['description']
-                humidity = data['main']['humidity']
-                return f"☀️ Weather Report for {location_name}:\n- Temp: {temp}°C\n- Status: {desc.capitalize()}\n- Humidity: {humidity}%"
-        except Exception as e:
-            print(f"[Weather Task] OpenWeather error: {e}, falling back to Open-Meteo")
-
-    # Fallback to free Open-Meteo (No key required)
-    try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
-        res = requests.get(url, timeout=5)
-        if res.status_code == 200:
-            data = res.json()
-            cw = data.get('current_weather', {})
-            temp = cw.get('temperature', 'N/A')
-            wind = cw.get('windspeed', 'N/A')
-            code = cw.get('weathercode', 0)
-            
-            # Map weather codes
-            weather_descriptions = {
-                0: "Clear sky ☀️",
-                1: "Mainly clear 🌤️", 2: "Partly cloudy ⛅", 3: "Overcast ☁️",
-                45: "Foggy 🌫️", 48: "Depositing rime fog 🌫️",
-                51: "Light drizzle 🌧️", 53: "Moderate drizzle 🌧️", 55: "Dense drizzle 🌧️",
-                61: "Slight rain 🌧️", 63: "Moderate rain 🌧️", 65: "Heavy rain 🌧️",
-                71: "Slight snow fall ❄️", 73: "Moderate snow fall ❄️", 75: "Heavy snow fall ❄️",
-                80: "Slight rain showers 🌦️", 81: "Moderate rain showers 🌦️", 82: "Violent rain showers 🌦️",
-                95: "Thunderstorm ⛈️"
-            }
-            desc = weather_descriptions.get(code, "Cloudy ☁️")
-            return f"☀️ Weather Report for {location_name} (via Open-Meteo):\n- Temp: {temp}°C\n- Status: {desc}\n- Wind: {wind} km/h"
-    except Exception as e:
-        print(f"[Weather Task] Open-Meteo error: {e}")
-        
-    return f"⚠️ Weather Alert:\nCould not fetch weather updates for {location_name} at this time."
+from .utils import resolve_coordinates, fetch_weather_report
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -187,10 +122,18 @@ def weather_location_detail(request, pk):
                 status_str = "activated" if location.is_active else "deactivated"
                 return JsonResponse({'success': True, 'message': f'Weather bot {status_str} for {location.location_name}.'})
             elif action == 'realtime':
+                if not location.latitude or not location.longitude:
+                    lat, lon, _ = resolve_coordinates(location.location_name)
+                    if lat:
+                        location.latitude, location.longitude = lat, lon
+                        location.save()
+                    else:
+                        return JsonResponse({'success': False, 'error': 'Invalid coordinates for this location.'})
+                
                 weather_msg = fetch_weather_report(location.latitude, location.longitude, location.location_name)
                 return JsonResponse({'success': True, 'message': weather_msg})
             else:
-                location.location_name = body.get('location_name', location.location_name).strip()
+                new_name = body.get('location_name', location.location_name).strip()
                 schedule_time_str = body.get('schedule_time', location.schedule_time.strftime('%H:%M')).strip()
                 try:
                     location.schedule_time = datetime.strptime(schedule_time_str, '%H:%M').time()
@@ -198,13 +141,13 @@ def weather_location_detail(request, pk):
                     pass
                 location.target_chat_id = body.get('target_chat_id', location.target_chat_id).strip()
                 
-                # Re-geocode if name changed
-                if 'location_name' in body:
-                    lat, lon, resolved_name = resolve_coordinates(location.location_name)
+                # Re-geocode if name changed or coordinates missing
+                if new_name != location.location_name or not location.latitude:
+                    lat, lon, resolved_name = resolve_coordinates(new_name)
                     if lat is not None and lon is not None:
                         location.latitude = lat
                         location.longitude = lon
-                        location.location_name = resolved_name
+                        location.location_name = resolved_name or new_name
                         
                 location.save()
                 return JsonResponse({'success': True, 'message': 'Weather configuration updated.'})

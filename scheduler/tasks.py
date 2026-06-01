@@ -6,76 +6,73 @@ from telegram.telethon_helper import send_message
 from messaging.models import MessageLog
 from analytics.clickhouse_client import log_message_event
 from .models import ScheduledMessage
+from datetime import timedelta
 
 @shared_task
 def send_scheduled_messages():
-    """
-    Periodic task to send scheduled messages that are due.
-    """
+    """Process active scheduled messages due for delivery."""
     now = timezone.now()
-    due_schedules = ScheduledMessage.objects.filter(
+    due_messages = ScheduledMessage.objects.filter(
         status=ScheduledMessage.Status.ACTIVE,
-        next_run_at__lte=now
+        next_run_at__lte=now + timezone.timedelta(seconds=5) # 5s buffer for beat lag
     ).select_related('telegram_account', 'user')
 
-    for schedule in due_schedules:
-        account = schedule.telegram_account
-        if not account.is_active or not account.session_string:
-            # Skip inactive accounts
+    for msg in due_messages:
+        account = msg.telegram_account
+        if not account or not account.is_active:
             continue
 
-        # Send message via Telethon helper
-        result = send_message(
+        # Execute sending
+        res = send_message(
             session_string=account.session_string,
             api_id=account.api_id,
             api_hash=account.api_hash,
-            target_chat=schedule.target_chat_id,
-            message_text=schedule.message_text
+            target_chat=msg.target_chat_id,
+            message_text=msg.message_text
         )
 
-        log_status = MessageLog.Status.SUCCESS if result.get('success') else MessageLog.Status.FAILED
-        chat_title = result.get('chat_title', schedule.target_chat_id)
-        chat_id = result.get('chat_id', schedule.target_chat_id)
-
-        # Create Postgres Message Log
+        success = res.get('success', False)
+        status_log = MessageLog.Status.SUCCESS if success else MessageLog.Status.FAILED
+        
+        # Log Result
         MessageLog.objects.create(
-            user=schedule.user,
+            user=msg.user,
             telegram_account=account,
-            chat_id=chat_id,
-            chat_title=chat_title,
-            message_text=schedule.message_text,
+            chat_id=res.get('chat_id', msg.target_chat_id),
+            chat_title=res.get('chat_title', 'Scheduled Task'),
+            message_text=msg.message_text,
             direction=MessageLog.Direction.OUTBOUND,
-            status=log_status,
-            sent_at=now
+            status=status_log
         )
-
-        # Clickhouse Analytics log (if ClickHouse is running, helper handles failures gracefully)
+        
         try:
             log_message_event(
-                user_id=schedule.user.id,
+                user_id=msg.user.id,
                 account_id=account.id,
                 direction='outbound',
-                status='success' if result.get('success') else 'failed',
-                chat_id=chat_id,
-                text=schedule.message_text
+                status='success' if success else 'failed',
+                chat_id=res.get('chat_id', msg.target_chat_id),
+                text=msg.message_text
             )
-        except Exception:
-            pass # ignore ClickHouse tracking failures in task thread
+        except Exception: pass
 
-        # Update Schedule parameters
-        schedule.last_run_at = now
-        
-        if schedule.schedule_type == ScheduledMessage.ScheduleType.ONCE:
-            schedule.status = ScheduledMessage.Status.COMPLETED
-            schedule.next_run_at = now
-        elif schedule.schedule_type == ScheduledMessage.ScheduleType.INTERVAL:
-            schedule.next_run_at = now + timezone.timedelta(seconds=schedule.interval_seconds)
-        elif schedule.schedule_type == ScheduledMessage.ScheduleType.CRON:
+        # Update Schedule state
+        msg.last_run_at = now
+        if msg.schedule_type == ScheduledMessage.ScheduleType.ONCE:
+            msg.status = ScheduledMessage.Status.COMPLETED
+        elif msg.schedule_type == ScheduledMessage.ScheduleType.INTERVAL:
+            # Ensure we don't drift: calculate from intended next_run_at
+            base_time = msg.next_run_at if msg.next_run_at > now - timedelta(minutes=1) else now
+            msg.next_run_at = base_time + timedelta(seconds=msg.interval_seconds)
+        elif msg.schedule_type == ScheduledMessage.ScheduleType.CRON:
             try:
-                iter_cron = croniter(schedule.cron_expression, now)
-                schedule.next_run_at = iter_cron.get_next(timezone.datetime)
-            except Exception:
-                # If error, pause it
-                schedule.status = ScheduledMessage.Status.PAUSED
+                # Calculate the next occurrence from 'now' using the cron expression
+                # Ensure we are using a localized datetime for croniter
+                local_now = timezone.localtime(now)
+                iter_cron = croniter(msg.cron_expression, local_now)
+                msg.next_run_at = iter_cron.get_next(timezone.datetime)
+            except Exception as e:
+                print(f"[Scheduler Error] Invalid cron '{msg.cron_expression}': {e}")
+                msg.status = ScheduledMessage.Status.PAUSED # Pause if expression is invalid
         
-        schedule.save()
+        msg.save()

@@ -6,8 +6,9 @@ A full-featured Django web application for managing Telegram accounts, sending A
 
 ## 🚀 Features
 
-### 🔐 Authentication System
-- Django built-in authentication (login/logout dashboard with sidebar neon style ui)
+### 🎨 Modern UI/UX
+- **Soft Neon Theme**: Cyberpunk-inspired aesthetic with glassmorphism effects.
+- **Responsive Design**: Fully optimized for mobile, tablet, and desktop views.
 - Multi-user support with roles: Admin, User, Viewer
 - Each user manages their own Telegram accounts and data
 
@@ -19,10 +20,11 @@ A full-featured Django web application for managing Telegram accounts, sending A
 - **Analytics**: Messaging behavior reports
 - **AI Assistant**: OpenAI-powered conversation assistant
 - **Weather Bot**: Automated weather messaging
+- **Weather Info**: Real-time interactive weather dashboard.
 
 ### 🗄️ Database
-- PostgreSQL with schema `synergydts`
-- Redis for caching and Celery tasks
+- **PostgreSQL**: Primary data storage (schema: `synergydts`).
+- **Redis**: Required for Celery task queuing and weather automation.
 - ClickHouse for analytics
 
 ## 📋 User Credentials
@@ -68,6 +70,13 @@ python manage.py runserver 0.0.0.0:8000
 
 Server: http://127.0.0.1:8000/dashboard/
 
+## 🧪 Testing
+Run the comprehensive feature test suite to verify API and System health:
+
+```bash
+python test_features.py
+```
+
 ## 🔌 API Endpoints
 
 | Endpoint | Description |
@@ -75,6 +84,7 @@ Server: http://127.0.0.1:8000/dashboard/
 | `/login/` | Authentication |
 | `/dashboard/` | Main dashboard |
 | `/dashboard/api/stats/` | Dashboard statistics |
+| `/dashboard/api/weather-current/` | Real-time weather data |
 | `/api/telegram/accounts/` | Telegram accounts CRUD |
 | `/api/messages/logs/` | Chat message history |
 | `/api/scheduler/messages/` | Scheduled messages |
@@ -117,4 +127,4 @@ django_ai_dashboard/
 
 | Login | Weather Bot | Firebase |
 |-------|-------------|----------|
-| ![Login](img/login.png) | ![Weather Bot](img/wheater-bot.png) | ![Firebase](img/firebase.png) |
+| !Login | !Weather Bot | !Firebase |

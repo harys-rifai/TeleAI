@@ -5,16 +5,30 @@
     --bg-dark: #07080d;
     --panel-bg: rgba(19, 21, 35, 0.7);
     --panel-border: rgba(0, 240, 255, 0.15);
-    --text-primary: #f0f3f8;
-    --text-muted: #8d9bb0;
-    
-    --neon-blue: #00f0ff;
-    --neon-violet: #d000ff;
-    --neon-green: #39ff14;
-    --neon-red: #ff3131;
-    
+    --text-primary: #f1f5f9;
+    --text-muted: #64748b;
+
+    --neon-blue: #38bdf8;
+    --neon-violet: #c084fc;
+    --neon-green: #4ade80;
+    --neon-red: #f87171;
+
     --font-primary: 'Outfit', sans-serif;
     --transition: all 0.3s ease;
+}
+
+@keyframes neonPulse {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 240, 255, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 0 5px rgba(0, 240, 255, 0.2);
+    }
 }
 
 * {
@@ -29,7 +43,7 @@ body {
     font-family: var(--font-primary);
     overflow-x: hidden;
     min-height: 100vh;
-    background-image: 
+    background-image:
         radial-gradient(at 10% 10%, rgba(189, 0, 255, 0.08) 0px, transparent 50%),
         radial-gradient(at 90% 90%, rgba(0, 240, 255, 0.08) 0px, transparent 50%);
 }
@@ -39,13 +53,16 @@ body {
     width: 6px;
     height: 6px;
 }
+
 ::-webkit-scrollbar-track {
     background: var(--bg-dark);
 }
+
 ::-webkit-scrollbar-thumb {
     background: rgba(0, 240, 255, 0.3);
     border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: var(--neon-blue);
 }
@@ -119,6 +136,10 @@ body {
     color: #fff;
     border: none;
     border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     padding: 14px;
     font-size: 1rem;
     font-weight: 600;
@@ -159,6 +180,7 @@ body {
     position: fixed;
     height: 100vh;
     z-index: 100;
+    transition: var(--transition);
 }
 
 .sidebar-brand {
@@ -200,7 +222,8 @@ body {
     text-align: center;
 }
 
-.sidebar-link:hover, .sidebar-item.active .sidebar-link {
+.sidebar-link:hover,
+.sidebar-item.active .sidebar-link {
     color: var(--text-primary);
     background: rgba(0, 240, 255, 0.05);
     box-shadow: inset 3px 0 0 var(--neon-blue);
@@ -239,6 +262,7 @@ body {
     flex-grow: 1;
     padding: 40px;
     min-height: 100vh;
+    transition: var(--transition);
 }
 
 /* Header */
@@ -282,6 +306,34 @@ body {
     background: rgba(141, 155, 176, 0.15);
     border: 1px solid var(--text-muted);
     color: var(--text-primary);
+}
+
+/* Weather Specific Neon Styles */
+.weather-card-hot {
+    border-color: var(--neon-red) !important;
+    background: linear-gradient(145deg, rgba(19, 21, 35, 0.8), rgba(255, 49, 49, 0.05)) !important;
+}
+
+.weather-card-cold {
+    border-color: var(--neon-blue) !important;
+    background: linear-gradient(145deg, rgba(19, 21, 35, 0.8), rgba(0, 240, 255, 0.05)) !important;
+}
+
+.neon-glow {
+    animation: neonPulse 2s infinite ease-in-out;
+}
+
+.weather-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.weather-stat-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* Stats Widgets Grid */
@@ -487,10 +539,106 @@ body {
     border-color: var(--neon-blue);
 }
 
+/* Mobile Responsiveness */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 240px;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        margin-top: 40px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .weather-display-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    .mobile-menu-btn {
+        display: block !important;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 101;
+    }
+}
+
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 240px;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        margin-top: 40px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .weather-display-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    .mobile-menu-btn {
+        display: block !important;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 101;
+    }
+}
+
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Auth Connection Modal */
@@ -530,6 +678,7 @@ body {
     background: none;
     border: none;
 }
+
 .modal-close:hover {
     color: var(--neon-red);
 }
@@ -565,6 +714,13 @@ body {
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }

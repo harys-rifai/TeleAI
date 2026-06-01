@@ -12,6 +12,7 @@ class WeatherLocation(models.Model):
     longitude = models.FloatField(blank=True, null=True)
     target_chat_id = models.CharField(max_length=150)
     schedule_time = models.TimeField(default="08:00")
+    last_run_at = models.DateTimeField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
